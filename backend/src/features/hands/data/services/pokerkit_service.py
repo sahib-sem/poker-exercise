@@ -1,10 +1,11 @@
 from pokerkit import Automation, NoLimitTexasHoldem
 
+from src.features.hands.presentation.schema.action import ActionCreate, ActionEnum
 from src.features.hands.domain.entities.action import Action
 
 class PokerKitService:
 
-    def __init__(self, hole_cards:list[str], actions:list[Action], stack_size=10000, small_blind_idx = 1, big_blind_idx = 2, min_bet=40, num_players=6):
+    def __init__(self, hole_cards:list[str], actions:list[Action], stack_size=10000, small_blind_idx = 1, big_blind_idx = 2,num_players=6,  min_bet=40 ):
         
 
         blinds:tuple[int,...] = (0,) * num_players
@@ -48,13 +49,12 @@ class PokerKitService:
                 self.state.check_or_call()
             elif action.action_type == 'raise' or action.action_type == 'all_in' or action.action_type == 'bet':
                 self.state.complete_bet_or_raise_to(action.amount)
-            
             elif action.action_type == 'burn':
                 self.state.burn_card(action.card_string)
             elif action.action_type == 'deal':
                 self.state.deal_board(action.card_string)
 
-    def validate_action(self, action:Action):
+    def validate_action(self, action:ActionCreate) -> bool:
         
         if action.action_type == 'fold':
             return self.state.can_fold()
@@ -70,38 +70,49 @@ class PokerKitService:
         
         return False
 
-    def get_possible_actions(self):
+    def get_possible_actions(self) -> list[ActionEnum]:
         actions = []
         if self.state.can_fold():
-            actions.append(Action(action_type='fold'))
+            actions.append(ActionEnum.FOLD)
         if self.state.can_check_or_call():
-            actions.append(Action(action_type='call'))
+            actions.append(ActionEnum.CHECK)
+            actions.append(ActionEnum.CALL)
         if self.state.can_complete_bet_or_raise_to():
-            actions.append(Action(action_type='raise'))
+            actions.append(ActionEnum.RAISE)
+            actions.append(ActionEnum.BET)
+            actions.append(ActionEnum.ALLIN)
         return actions
     def get_state(self):
         return self.state
 
-    def get_hole_cards(self):
-        return self.state.hole_cards
+    def get_hole_cards(self) -> list[str]:
 
-    def get_board_cards(self):
-        return self.state.board_cards
+        hole_cards = self.state.hole_cards
+
+        return ["".join([card.rank + card.suit for card in cards]) for cards in hole_cards]
+
+    def get_board_cards(self) -> list[str]:
+        return [card.rank + card.suit for card in self.state.get_board_cards(0)]
     
-    def get_stacks(self):
+    def get_stacks(self) -> list[int]:
         return self.state.stacks
 
-    def get_actor_index(self):
+    def get_actor_index(self) -> int | None:
         return self.state.actor_index
 
-    def get_street_index(self):
+    def get_street_index(self) -> int | None:
         return self.state.street_index
-    
-    def get_street_indices(self):
-        return self.state.street_indices
 
-    def get_min_completion_betting_or_raising_to_amount(self):
-        return self.state.min_completion_betting_or_raising_to_amount
+    def get_min_bet(self) -> int:
+        min_bet = self.state.min_completion_betting_or_raising_to_amount
+        if min_bet == None:
+            return 0
+        return min_bet
     
-    def get_max_completion_betting_or_raising_to_amount(self): 
-        return self.state.max_completion_betting_or_raising_to_amount
+    def get_max_bet(self) -> int: 
+        max_bet = self.state.max_completion_betting_or_raising_to_amount
+
+        if max_bet == None:
+            return 0
+        return max_bet
+

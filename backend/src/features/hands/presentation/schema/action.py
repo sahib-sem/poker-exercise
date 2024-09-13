@@ -17,6 +17,20 @@ class ActionBase(BaseModel):
 class ActionCreate(ActionBase):
     pass
 
+class ActionResponse(BaseModel):
+    success: bool = False
+    message: str = ''
+    next_actor: int = 0
+    possible_moves: list[ActionEnum] = []
+    minimum_bet: int = 0
+    maximum_bet: int = 0
+    game_ended: bool = False
+    street_idx: int = 0
+    card_string: str = ''
+
+
+
+
 
     
 
