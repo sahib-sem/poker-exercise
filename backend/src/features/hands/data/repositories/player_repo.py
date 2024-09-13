@@ -36,3 +36,12 @@ class PlayerRepository:
             for row in rows]
         
         return players
+
+    def update_player(self, player: Player) -> Player:
+        with self.db_conn.cursor() as cursor:
+            cursor.execute("""
+                UPDATE players
+                SET stack_size = %s, winnings = %s
+                WHERE id = %s;
+            """, (player.initial_stack_size, player.winnings, player.id))
+        return player

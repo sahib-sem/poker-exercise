@@ -8,9 +8,11 @@ class PokerKitService:
     def __init__(self, hole_cards:list[str], actions:list[Action], stack_size=10000, small_blind_idx = 1, big_blind_idx = 2,num_players=6,  min_bet=40 ):
         
 
-        blinds:tuple[int,...] = (0,) * num_players
+        blinds = [0] * num_players
         blinds[small_blind_idx] = min_bet // 2
         blinds[big_blind_idx] = min_bet
+
+        blinds = tuple(blinds)
 
 
         self.state = NoLimitTexasHoldem.create_state(
@@ -69,6 +71,15 @@ class PokerKitService:
         
         
         return False
+    
+    def apply_action(self, action:ActionCreate):
+        if action.action_type == 'fold':
+            self.state.fold()
+        elif action.action_type == 'call' or action.action_type == 'check':
+            self.state.check_or_call()
+        elif action.action_type == 'raise' or action.action_type == 'all_in' or action.action_type == 'bet':
+            self.state.complete_bet_or_raise_to(action.amount)
+        
 
     def get_possible_actions(self) -> list[ActionEnum]:
         actions = []

@@ -20,12 +20,12 @@ class ActionCreate(ActionBase):
 class ActionResponse(BaseModel):
     success: bool = False
     message: str = ''
-    next_actor: int = 0
+    next_actor: int | None = None
     possible_moves: list[ActionEnum] = []
     minimum_bet: int = 0
     maximum_bet: int = 0
     game_ended: bool = False
-    street_idx: int = 0
+    street_idx: int | None = None
     card_string: str = ''
 
 

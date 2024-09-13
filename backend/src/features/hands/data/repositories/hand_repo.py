@@ -1,5 +1,4 @@
 import psycopg2
-from typing import List, Optional
 from src.features.hands.data.repositories.action_repo import ActionRepository
 from src.features.hands.data.repositories.player_repo import PlayerRepository
 from src.features.hands.domain.entities.hand import Hand
@@ -45,7 +44,7 @@ class HandRepository:
             cursor.execute("""
                 INSERT INTO hands (has_ended, number_of_players, small_blind_idx, big_blind_idx, 
                                    dealer_idx, stack_size, big_blind_size)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;
+                VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id;
             """, (hand.has_ended, hand.number_of_players, hand.small_blind_idx, hand.big_blind_idx,
                   hand.dealer_idx, hand.stack_size, hand.big_blind_size))
             self.db_conn.commit()
@@ -65,7 +64,7 @@ class HandRepository:
             self.db_conn.commit()
         return hand
 
-    def get_hands_by_status(self, status: bool) -> List[Hand]:
+    def get_hands_by_status(self, status: bool) -> list[Hand]:
         """Get all hands by status (True if ended, False otherwise)"""
         with self.db_conn.cursor() as cursor:
             cursor.execute("""
