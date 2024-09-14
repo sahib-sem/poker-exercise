@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import HandHistory from "./components/handHistory";
 import GameControls from "./components/gameControls";
 import ActionButtons from "./components/actionButtons";
+import GameLogs from "./components/gameLogs";
 
 export default function Home() {
   return (
@@ -12,10 +13,8 @@ export default function Home() {
         <div className="h-full flex flex-col justify-between text-[14px]">
           <div className="h-5/6">
             <GameControls />
-
-            <div className="text-[12px] p-2">
-              {/* logs are going to be displayed here  */}
-            </div>
+            <GameLogs />
+            
           </div>
           <ActionButtons />
         </div>
