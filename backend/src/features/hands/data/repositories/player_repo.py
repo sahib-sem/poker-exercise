@@ -28,6 +28,7 @@ class PlayerRepository:
             rows = cursor.fetchall()
 
         players = [Player( 
+            id=row[0],
             hand_id=row[1], 
             player_idx=row[2], 
             initial_stack_size=row[3], 
@@ -44,4 +45,5 @@ class PlayerRepository:
                 SET stack_size = %s, winnings = %s
                 WHERE id = %s;
             """, (player.initial_stack_size, player.winnings, player.id))
+            self.db_conn.commit()
         return player

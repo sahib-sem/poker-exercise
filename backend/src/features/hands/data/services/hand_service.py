@@ -50,13 +50,20 @@ class HandService:
             return ActionResponse(success=False, message='Hand has ended')
 
         hole_cards = [player.hole_cards for player in sorted(hand.players, key=lambda x: x.player_idx)] 
-
+        
         poker_service = PokerKitService(hole_cards, hand.actions, hand.stack_size, hand.small_blind_idx, hand.big_blind_idx, hand.number_of_players)
+        current_actor = poker_service.get_actor_index()
 
+        if action.action_type == 'all_in':
+            action.amount = poker_service.get_state().stacks[current_actor]
+        elif action.action_type == 'raise':
+            action.amount = poker_service.get_min_bet() + action.amount
         valid = poker_service.validate_action(action)
 
         if not valid:
             return ActionResponse(success=False, message='Invalid action')
+        
+        
         
         action_entity = Action(**action.model_dump())
         self.action_repo.create_action(action_entity)
@@ -83,7 +90,18 @@ class HandService:
 
             self.action_repo.create_action(deal_action)
 
-            return ActionResponse(success=True, next_actor=poker_service.get_actor_index(), possible_moves=poker_service.get_possible_actions(), minimum_bet=poker_service.get_min_bet(), maximum_bet=poker_service.get_max_bet(), game_ended= state.street_index == None, street_idx=poker_service.get_street_index(), card_string=card_string)
+            game_ended = state.street_index == None
+
+            if game_ended:
+                hand.has_ended = True
+                self.hand_repo.update_hand(hand)
+
+                for player in hand.players:
+                    player.winnings = state.payoffs[player.player_idx]
+                    print(player)
+                    self.player_repo.update_player(player)
+
+            return ActionResponse(success=True,current_actor=current_actor , next_actor=poker_service.get_actor_index(), possible_moves=[] if game_ended else poker_service.get_possible_actions(), maximum_bet=poker_service.get_max_bet() - poker_service.get_min_bet(), game_ended= game_ended, street_idx=poker_service.get_street_index(), card_string=card_string ,pot_amount= poker_service.get_pot_amount())
         
         game_ended = state.street_index == None
 
@@ -92,13 +110,16 @@ class HandService:
             self.hand_repo.update_hand(hand)
 
             for player in hand.players:
-                player.winnings = state.stacks[player.player_idx] - player.initial_stack_size
+                player.winnings = state.payoffs[player.player_idx]
+                print(player)
                 self.player_repo.update_player(player)
     
-        return ActionResponse(success=True, next_actor=poker_service.get_actor_index(), possible_moves=poker_service.get_possible_actions(), minimum_bet=poker_service.get_min_bet(), maximum_bet=poker_service.get_max_bet(), game_ended= state.street_index == None, street_idx=state.street_index, card_string='')
+        return ActionResponse(success=True, current_actor=current_actor, next_actor=poker_service.get_actor_index(), possible_moves=[] if game_ended else poker_service.get_possible_actions(), maximum_bet=poker_service.get_max_bet() - poker_service.get_min_bet(), game_ended=game_ended, street_idx=state.street_index, card_string='', pot_amount= poker_service.get_pot_amount())
 
     def get_hands_by_status(self, status: bool) -> list[Hand]:
         return self.hand_repo.get_hands_by_status(status)
+
+    
     
     
 

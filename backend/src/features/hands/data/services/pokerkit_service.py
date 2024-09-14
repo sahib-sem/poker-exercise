@@ -5,12 +5,12 @@ from src.features.hands.domain.entities.action import Action
 
 class PokerKitService:
 
-    def __init__(self, hole_cards:list[str], actions:list[Action], stack_size=10000, small_blind_idx = 1, big_blind_idx = 2,num_players=6,  min_bet=40 ):
+    def __init__(self, hole_cards:list[str], actions:list[Action], stack_size=10000, small_blind_idx = 1, big_blind_idx = 2,num_players=6,  min_bet=20 ):
         
-
+        self.stack_size = stack_size
         blinds = [0] * num_players
-        blinds[small_blind_idx] = min_bet // 2
-        blinds[big_blind_idx] = min_bet
+        blinds[small_blind_idx] = min_bet 
+        blinds[big_blind_idx] = min_bet * 2
 
         blinds = tuple(blinds)
 
@@ -82,16 +82,22 @@ class PokerKitService:
         
 
     def get_possible_actions(self) -> list[ActionEnum]:
+
         actions = []
+        player_stack = self.state.stacks[self.state.actor_index]
+        if self.state.can_complete_bet_or_raise_to(player_stack):
+            actions.append(ActionEnum.ALLIN)
         if self.state.can_fold():
             actions.append(ActionEnum.FOLD)
-        if self.state.can_check_or_call():
-            actions.append(ActionEnum.CHECK)
+        
+        
+        if any(self.state.bets):
             actions.append(ActionEnum.CALL)
-        if self.state.can_complete_bet_or_raise_to():
             actions.append(ActionEnum.RAISE)
+        else:
             actions.append(ActionEnum.BET)
-            actions.append(ActionEnum.ALLIN)
+            actions.append(ActionEnum.CHECK)
+            
         return actions
     def get_state(self):
         return self.state
@@ -126,4 +132,10 @@ class PokerKitService:
         if max_bet == None:
             return 0
         return max_bet
+
+    def get_pot_amount(self) -> int:
+        
+        payoffs = self.state.payoffs
+
+        return sum([abs(payoff) for payoff in payoffs])
 
