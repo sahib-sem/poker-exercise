@@ -1,0 +1,21 @@
+[flake8]
+# Maximum line length based on PEP 8 (79 characters, though 88 is common when using tools like black)
+max-line-length = 79
+
+# Exclude specific directories and files that typically do not need to be checked (e.g., virtual environments, compiled files)
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    build,
+    dist,
+    .mypy_cache,
+    .pytest_cache
+
+# Ignore specific errors/warnings if needed (optional)
+# Example: D202 (No blank lines allowed after function docstring)
+# ignore = D202
+
+# Enable specific plugins (optional)
+# Example: enabling `flake8-docstrings` or `flake8-import-order` plugins
+# docstring-convention = google

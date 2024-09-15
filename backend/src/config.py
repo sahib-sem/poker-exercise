@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = 'poker api'
+    app_name: str = "poker api"
 
     db_host: str
     db_user: str

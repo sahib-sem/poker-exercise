@@ -1,8 +1,8 @@
-from fastapi import  FastAPI
-from src.core.database.create_tables import create_tables
-from src.features.hands.presentation.routes.route import router
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.core.database.create_tables import create_tables
+from src.features.hands.presentation.routes.route import router
 
 create_tables()
 
