@@ -32,7 +32,6 @@ export default function GameControls() {
   return (
     <div className="flex w-full flex-wrap justify-start items-center space-x-5 space-y-2 pt-3">
       <h2 className="flex-shrink-0 pr-5">Stack</h2>
-      {/* Form for stack size input and Apply button */}
       <form className="flex items-center space-x-3" onSubmit={handleFormSubmit}>
         <Input
           type="number"

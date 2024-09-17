@@ -4,6 +4,8 @@ import api from "../lib/axios";
 export const MINIMUM_BET = 20;
 export const BIG_BLIND_SIZE = 40;
 export const STACK_SIZE = 10000;
+export const NUMBER_OF_PLAYERS = 6;
+export const ACTION_TYPES = ["fold", "check", "call", "all_in", "bet", "raise"];
 
 type Player = {
   hand_id: string;
@@ -12,6 +14,16 @@ type Player = {
   hole_cards: string;
   winnings: number;
 };
+
+type HandHistoryItem = {
+  hand_id: string;
+  stack_size: number;
+  dealer_idx: number;
+  small_blind_idx: number;
+  big_blind_idx: number;
+  players: Player[];
+  action_string: string;
+}
 
 type Logs = {
   log: string;
@@ -29,11 +41,13 @@ type GameState = {
   actions: string[];
   nextActor: number | null;
   logs: Logs[];
+  handHistory: HandHistoryItem[];
   hasGameStartedOnce: boolean;
   gameHasEnded: boolean;
   initializeGame: (stackSize: number) => Promise<void>;
-  performAction: (actionType: string, amount: number) => Promise<void>;
+  performAction: (actionType: string, amount: number, raiseAmount:number) => Promise<void>;
   resetGame: () => void;
+  getHandHistory: () => Promise<void>;
   applyStackSize: (stackSize: number) => void;
   incrementBetOrRaise: (type: string) => void;
   decrementBetOrRaise: (type: string) => void;
@@ -74,6 +88,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   actions: [],
   nextActor: null,
   logs: [],
+  handHistory: [],
   hasGameStartedOnce: false,
   gameHasEnded: false,
 
@@ -84,6 +99,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     try {
       const response = await api.post("/hands", {
         stack_size: stackSize,
+        number_of_players:NUMBER_OF_PLAYERS,
       });
 
       const { id, players, small_blind_idx, big_blind_idx, dealer_idx } =
@@ -123,7 +139,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-  performAction: async (actionType: string, amount: number) => {
+  performAction: async (actionType: string, amount: number, raiseAmount:number) => {
     const { gameId } = get();
     if (!gameId) return;
 
@@ -131,6 +147,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const response = await api.post(`/hands/${gameId}/actions`, {
         hand_id: gameId,
         action_type: actionType,
+        raise_amount: raiseAmount,
         amount,
       });
 
@@ -141,8 +158,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         next_actor,
         possible_moves,
         game_ended,
-        street_idx,
-        card_string,
+        dealt_cards,
         pot_amount
       } = response.data;
 
@@ -159,7 +175,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             log: `Player ${current_actor + 1}  ${formatAction(actionType)}.`,
             isBold: false,
           });
-        } else if (actionType == "bet" || actionType == "raise") {
+        } else if (actionType == "bet") {
           actionLogs.push({
             log: `Player ${current_actor + 1} ${formatAction(
               actionType
@@ -168,9 +184,18 @@ export const useGameStore = create<GameState>((set, get) => ({
           });
         }
 
-        if (card_string != "") {
+        else if (actionType == "raise") {
           actionLogs.push({
-            log: `${formatGamePhase(street_idx)}${card_string}.`,
+            log: `Player ${current_actor + 1} ${formatAction(
+              actionType
+            )} ${raiseAmount}.`,
+            isBold: false,
+          });
+        }
+
+         for ( var dealt_card of dealt_cards) {
+          actionLogs.push({
+            log: `${formatGamePhase(dealt_card.street_idx)}${dealt_card.card_string}.`,
             isBold: true,
           });
         }
@@ -181,6 +206,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             log: `final pot was ${pot_amount}.`,
             isBold: true,
           });
+          get().getHandHistory();
         }
 
         set({
@@ -210,6 +236,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       gameHasEnded: false,
       currentBet: MINIMUM_BET,
       currentRaise: BIG_BLIND_SIZE,
+      raiseBetMax: STACK_SIZE - BIG_BLIND_SIZE,
     });
   },
 
@@ -256,4 +283,66 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
     }
   },
-}));
+
+  getHandHistory: async () => {
+    
+
+    try {
+      const response = await api.get(`/hands?status=completed`);
+
+      let handHistory: HandHistoryItem[] =  response.data.map((handItem:any) => {
+        
+        let actionStringArray: string[] = [];
+
+        let actions: any[] = handItem.actions;
+
+        actions.map((action:any, index) => {
+          if (action.action_type == 'deal') {
+            actionStringArray.push(` ${action.card_string} `);
+          }  else if (action.action_type == 'bet') {
+            actionStringArray.push(`b${action.amount}`);
+          } else if (action.action_type == 'raise') {
+            actionStringArray.push(`r${action.raise_amount}`);
+          } else if (action.action_type == 'call') {
+            actionStringArray.push(`c`);
+          } else if (action.action_type == 'check') {
+            actionStringArray.push(`x`);
+          } else if (action.action_type == 'fold') {
+            actionStringArray.push(`f`);
+          } else if (action.action_type == 'all_in') {
+            actionStringArray.push(`allin`);
+          }
+
+          
+          if (index < actions.length - 1 && (index < actions.length - 1 && (ACTION_TYPES.includes(action.action_type) && ACTION_TYPES.includes(actions[index + 1].action_type)))) {
+            actionStringArray.push(":");
+          }
+        });
+
+        let actionString = actionStringArray.join("");
+
+        let handHistoryItem: HandHistoryItem = {
+          hand_id: handItem.id,
+          stack_size: handItem.stack_size,
+          dealer_idx: handItem.dealer_idx,
+          small_blind_idx: handItem.small_blind_idx,
+          big_blind_idx: handItem.big_blind_idx,
+          players: handItem.players,
+          action_string: actionString
+        }
+
+        return handHistoryItem;
+      });
+
+      set({
+        handHistory: handHistory,
+      });
+
+      
+    } catch (error) {
+      console.error("Failed to get hand history:", error);
+    }
+  },
+}
+
+));
