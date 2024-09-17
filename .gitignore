@@ -31,9 +31,13 @@ frontend/.env*.local
 # vercel
 frontend/.vercel
 
+frontend/test-results
+
 # typescript
 *.tsbuildinfo
 frontend/next-env.d.ts
 
 # virtual env
 backend/.venv
+*__pycache__
+*.env
