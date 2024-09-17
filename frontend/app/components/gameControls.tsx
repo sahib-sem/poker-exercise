@@ -15,8 +15,6 @@ export default function GameControls() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const newStackSize = Number(formData.get('stacksize'));
-
-    console.log('newStackSize', newStackSize);
     
     if (newStackSize >= 100) {
       console.log('updated')

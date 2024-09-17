@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import toast from "react-hot-toast";
 import api from "../lib/axios";
 
 export const MINIMUM_BET = 20;
@@ -23,7 +24,7 @@ type HandHistoryItem = {
   big_blind_idx: number;
   players: Player[];
   action_string: string;
-}
+};
 
 type Logs = {
   log: string;
@@ -45,7 +46,11 @@ type GameState = {
   hasGameStartedOnce: boolean;
   gameHasEnded: boolean;
   initializeGame: (stackSize: number) => Promise<void>;
-  performAction: (actionType: string, amount: number, raiseAmount:number) => Promise<void>;
+  performAction: (
+    actionType: string,
+    amount: number,
+    raiseAmount: number
+  ) => Promise<void>;
   resetGame: () => void;
   getHandHistory: () => Promise<void>;
   applyStackSize: (stackSize: number) => void;
@@ -93,13 +98,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   gameHasEnded: false,
 
   initializeGame: async (stackSize: number) => {
-
-    let state = get()
-    state.resetGame()
+    let state = get();
+    state.resetGame();
     try {
       const response = await api.post("/hands", {
         stack_size: stackSize,
-        number_of_players:NUMBER_OF_PLAYERS,
+        number_of_players: NUMBER_OF_PLAYERS,
       });
 
       const { id, players, small_blind_idx, big_blind_idx, dealer_idx } =
@@ -139,7 +143,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-  performAction: async (actionType: string, amount: number, raiseAmount:number) => {
+  performAction: async (
+    actionType: string,
+    amount: number,
+    raiseAmount: number
+  ) => {
     const { gameId } = get();
     if (!gameId) return;
 
@@ -159,7 +167,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         possible_moves,
         game_ended,
         dealt_cards,
-        pot_amount
+        pot_amount,
       } = response.data;
 
       if (success) {
@@ -182,9 +190,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             )} ${amount}.`,
             isBold: false,
           });
-        }
-
-        else if (actionType == "raise") {
+        } else if (actionType == "raise") {
           actionLogs.push({
             log: `Player ${current_actor + 1} ${formatAction(
               actionType
@@ -193,9 +199,11 @@ export const useGameStore = create<GameState>((set, get) => ({
           });
         }
 
-         for ( var dealt_card of dealt_cards) {
+        for (var dealt_card of dealt_cards) {
           actionLogs.push({
-            log: `${formatGamePhase(dealt_card.street_idx)}${dealt_card.card_string}.`,
+            log: `${formatGamePhase(dealt_card.street_idx)}${
+              dealt_card.card_string
+            }.`,
             isBold: true,
           });
         }
@@ -228,7 +236,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({
       gameId: null,
       players: [],
-      stackSize: 10000,
       actions: [],
       hasGameStartedOnce: false,
       logs: [],
@@ -240,13 +247,15 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
   },
 
-
-
   applyStackSize: (stackSize: number) => {
     if (stackSize >= 100) {
       set({
         stackSize,
       });
+
+      toast.success(`Stack size updated to ${stackSize}`);
+    } else {
+      toast.error("Stack size should be at least 100");
     }
   },
 
@@ -285,64 +294,63 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   getHandHistory: async () => {
-    
-
     try {
       const response = await api.get(`/hands?status=completed`);
 
-      let handHistory: HandHistoryItem[] =  response.data.map((handItem:any) => {
-        
-        let actionStringArray: string[] = [];
+      let handHistory: HandHistoryItem[] = response.data.map(
+        (handItem: any) => {
+          let actionStringArray: string[] = [];
 
-        let actions: any[] = handItem.actions;
+          let actions: any[] = handItem.actions;
 
-        actions.map((action:any, index) => {
-          if (action.action_type == 'deal') {
-            actionStringArray.push(` ${action.card_string} `);
-          }  else if (action.action_type == 'bet') {
-            actionStringArray.push(`b${action.amount}`);
-          } else if (action.action_type == 'raise') {
-            actionStringArray.push(`r${action.raise_amount}`);
-          } else if (action.action_type == 'call') {
-            actionStringArray.push(`c`);
-          } else if (action.action_type == 'check') {
-            actionStringArray.push(`x`);
-          } else if (action.action_type == 'fold') {
-            actionStringArray.push(`f`);
-          } else if (action.action_type == 'all_in') {
-            actionStringArray.push(`allin`);
-          }
+          actions.map((action: any, index) => {
+            if (action.action_type == "deal") {
+              actionStringArray.push(` ${action.card_string} `);
+            } else if (action.action_type == "bet") {
+              actionStringArray.push(`b${action.amount}`);
+            } else if (action.action_type == "raise") {
+              actionStringArray.push(`r${action.raise_amount}`);
+            } else if (action.action_type == "call") {
+              actionStringArray.push(`c`);
+            } else if (action.action_type == "check") {
+              actionStringArray.push(`x`);
+            } else if (action.action_type == "fold") {
+              actionStringArray.push(`f`);
+            } else if (action.action_type == "all_in") {
+              actionStringArray.push(`allin`);
+            }
 
-          
-          if (index < actions.length - 1 && (index < actions.length - 1 && (ACTION_TYPES.includes(action.action_type) && ACTION_TYPES.includes(actions[index + 1].action_type)))) {
-            actionStringArray.push(":");
-          }
-        });
+            if (
+              index < actions.length - 1 &&
+              index < actions.length - 1 &&
+              ACTION_TYPES.includes(action.action_type) &&
+              ACTION_TYPES.includes(actions[index + 1].action_type)
+            ) {
+              actionStringArray.push(":");
+            }
+          });
 
-        let actionString = actionStringArray.join("");
+          let actionString = actionStringArray.join("");
 
-        let handHistoryItem: HandHistoryItem = {
-          hand_id: handItem.id,
-          stack_size: handItem.stack_size,
-          dealer_idx: handItem.dealer_idx,
-          small_blind_idx: handItem.small_blind_idx,
-          big_blind_idx: handItem.big_blind_idx,
-          players: handItem.players,
-          action_string: actionString
+          let handHistoryItem: HandHistoryItem = {
+            hand_id: handItem.id,
+            stack_size: handItem.stack_size,
+            dealer_idx: handItem.dealer_idx,
+            small_blind_idx: handItem.small_blind_idx,
+            big_blind_idx: handItem.big_blind_idx,
+            players: handItem.players,
+            action_string: actionString,
+          };
+
+          return handHistoryItem;
         }
-
-        return handHistoryItem;
-      });
+      );
 
       set({
         handHistory: handHistory,
       });
-
-      
     } catch (error) {
       console.error("Failed to get hand history:", error);
     }
   },
-}
-
-));
+}));
