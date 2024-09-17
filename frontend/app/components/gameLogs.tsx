@@ -19,7 +19,7 @@ export default function GameLogs() {
   
 
   return (
-    <ScrollArea className="h-full text-[10px] p-2" ref={scrollAreaRef}>
+    <ScrollArea className="h-full text-[10px] p-2" ref={scrollAreaRef} data-testid="game-logs">
       <div >
         {logs.map((log, index) => (
           <p

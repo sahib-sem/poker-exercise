@@ -25,11 +25,11 @@ export default function HandHistory() {
   console.log(handHistory[handHistory.length - 1], 'handHistory');
 
   return (
-    <div className="bg-sky-50 p-3 border text-gray-500 rounded-[4px] h-[90vh]">
+    <div className="bg-sky-50 p-3 border text-gray-500 rounded-[4px] h-[90vh]" hand-data-testid="hand-history">
       <h1>Hand History</h1>
 
       <ScrollArea className="h-[80vh] pr-4" ref={scrollAreaRef}>
-        <div className="text-black text-[12px] mx-2">
+        <div className="text-black text-[12px] mx-2" >
 
           {handHistory.map((item, index) => {
             const playerWinnings = item.players.map((player, index) => {
@@ -41,7 +41,7 @@ export default function HandHistory() {
             return (
               <div key={item.hand_id} className="bg-blue-200 p-2 my-2 ml-1">
                 <ScrollArea  className="w-[30vw] whitespace-nowrap">
-                  <div className="p-2">
+                  <div className="p-2" >
                     <div>{`Hand  #${item.hand_id}`}</div>
                     <div>{`Stack  ${item.stack_size}; Dealer: Player ${
                       item.dealer_idx + 1
