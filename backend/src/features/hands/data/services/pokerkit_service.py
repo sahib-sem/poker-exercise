@@ -102,10 +102,10 @@ class PokerKitService:
     def get_possible_actions(self) -> list[ActionEnum]:
 
         actions = []
-        if self.state.actor_index is not None:
-            player_stack = self.state.stacks[self.state.actor_index]
-            if self.state.can_complete_bet_or_raise_to(player_stack):
-                actions.append(ActionEnum.ALLIN)
+        
+        player_stack = self.state.get_effective_stack(self.state.actor_index)
+        if self.state.can_complete_bet_or_raise_to(player_stack):
+            actions.append(ActionEnum.ALLIN)
         if self.state.can_fold():
             actions.append(ActionEnum.FOLD)
 
@@ -114,7 +114,7 @@ class PokerKitService:
                 actions.append(ActionEnum.CALL)
 
             if self.state.can_complete_bet_or_raise_to(
-                self.get_min_bet() + self.big_blind_size
+                self.get_min_bet()
             ):
                 actions.append(ActionEnum.RAISE)
         else:
@@ -127,6 +127,9 @@ class PokerKitService:
 
     def get_state(self):
         return self.state
+
+    def get_bets(self) -> list[int]:
+        return self.state.bets
 
     def get_hole_cards(self) -> list[str]:
 
