@@ -41,3 +41,4 @@ frontend/next-env.d.ts
 backend/.venv
 *__pycache__
 *.env
+*pytest_cache
