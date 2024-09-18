@@ -21,4 +21,9 @@ app.add_middleware(
 )
 
 
+
 app.include_router(router, prefix='/api/v1')
+
+@app.get('/api/v1/healthcheck')
+def healthcheck():
+    return {'status': 'ok'}
