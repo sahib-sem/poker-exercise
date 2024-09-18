@@ -10,6 +10,8 @@ app = FastAPI()
 
 origins = [
     "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://poker_frontend:3000"
 ]
 
 app.add_middleware(
@@ -23,7 +25,3 @@ app.add_middleware(
 
 
 app.include_router(router, prefix='/api/v1')
-
-@app.get('/api/v1/healthcheck')
-def healthcheck():
-    return {'status': 'ok'}
