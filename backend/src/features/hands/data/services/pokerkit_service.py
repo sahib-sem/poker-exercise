@@ -102,7 +102,7 @@ class PokerKitService:
     def get_possible_actions(self) -> list[ActionEnum]:
 
         actions = []
-        
+
         player_stack = self.state.get_effective_stack(self.state.actor_index)
         if self.state.can_complete_bet_or_raise_to(player_stack):
             actions.append(ActionEnum.ALLIN)

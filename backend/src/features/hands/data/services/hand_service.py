@@ -79,7 +79,11 @@ class HandService:
         current_actor = poker_service.get_actor_index()
 
         if action.action_type == "all_in":
-            action.amount = poker_service.get_state().get_effective_stack(current_actor)
+            action.amount = (
+                poker_service.get_state().get_effective_stack(
+                    current_actor
+                    )
+                )
         elif action.action_type == "raise":
             action.amount = max(poker_service.get_bets()) + action.raise_amount
         valid = poker_service.validate_action(action)
@@ -130,7 +134,7 @@ class HandService:
 
             self.action_repo.create_action(deal_action)
 
-        game_ended = state.status == False
+        game_ended = state.status is False
 
         if game_ended:
             hand.has_ended = True
