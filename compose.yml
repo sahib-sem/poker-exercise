@@ -41,6 +41,7 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+        restart: true
 
   db:
     image: postgres:16.4-alpine3.20
